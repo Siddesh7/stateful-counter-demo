@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import {NextRequest, NextResponse} from "next/server";
 import * as jose from "jose";
-import { randomUUID } from "crypto";
+import {randomUUID} from "crypto";
 
 interface State {
   count: number;
@@ -16,18 +16,18 @@ const JWS_SECRET = process.env["JWS_SECRET"] ?? "";
 
 async function encodeState(state: State) {
   return await new jose.CompactSign(
-    new TextEncoder().encode(JSON.stringify({ ...state, nonce: randomUUID() }))
+    new TextEncoder().encode(JSON.stringify({...state, nonce: randomUUID()}))
   )
-    .setProtectedHeader({ alg: "HS256" })
+    .setProtectedHeader({alg: "HS256"})
     .sign(Buffer.from(JWS_SECRET, "hex"));
 }
 
 async function verifyState(encodedState: string): Promise<State> {
-  const { payload } = await jose.compactVerify(
+  const {payload} = await jose.compactVerify(
     encodedState,
     Buffer.from(JWS_SECRET, "hex")
   );
-  const { nonce, ...state } = JSON.parse(new TextDecoder().decode(payload));
+  const {nonce, ...state} = JSON.parse(new TextDecoder().decode(payload));
   return state;
 }
 
@@ -46,9 +46,9 @@ function deriveState(state: State, action: Action) {
 
 export async function POST(req: NextRequest) {
   const {
-    untrustedData: { buttonIndex, state: serializedState },
+    untrustedData: {buttonIndex, state: serializedState},
   } = await req.json();
-
+  console.log("buttonIndex", buttonIndex);
   let state: State;
   if (!serializedState) {
     state = {
@@ -62,9 +62,9 @@ export async function POST(req: NextRequest) {
       state = await verifyState(serializedState);
     } catch (e: any) {
       if (e?.code === "ERR_JWS_INVALID") {
-        return new NextResponse("Invalid state", { status: 400 });
+        return new NextResponse("Invalid state", {status: 400});
       } else {
-        return new NextResponse("Internal server error", { status: 500 });
+        return new NextResponse("Internal server error", {status: 500});
       }
     }
   }
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
   if (state.count === 0) {
     action = "inc";
   } else {
-    action = buttonIndex === 1 ? "dec" : "inc";
+    action = buttonIndex === "1" ? "dec" : "inc";
   }
 
   const newState = deriveState(state, action);
