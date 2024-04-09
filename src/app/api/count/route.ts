@@ -48,9 +48,11 @@ export async function POST(req: NextRequest) {
   const {
     untrustedData: {buttonIndex, state: serializedState},
   } = await req.json();
+  console.log("serializedState", serializedState);
   console.log("buttonIndex", buttonIndex);
   let state: State;
   if (!serializedState) {
+    console.log("No state");
     state = {
       count: 0,
       incs: 0,
@@ -59,8 +61,10 @@ export async function POST(req: NextRequest) {
     };
   } else {
     try {
+      console.log("serializedState", serializedState);
       state = await verifyState(serializedState);
     } catch (e: any) {
+      console.error(e);
       if (e?.code === "ERR_JWS_INVALID") {
         return new NextResponse("Invalid state", {status: 400});
       } else {
@@ -73,7 +77,7 @@ export async function POST(req: NextRequest) {
   if (state.count === 0) {
     action = "inc";
   } else {
-    action = buttonIndex === "1" ? "dec" : "inc";
+    action = buttonIndex === 1 ? "dec" : "inc";
   }
 
   const newState = deriveState(state, action);
